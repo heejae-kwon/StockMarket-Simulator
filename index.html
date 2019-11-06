@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CS399 Project6</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+	<script src="papaparse.min.js"></script>
+  </head>
+  <body>
+	<loading>
+	Please wait for loading data...
+	</loading>
+	<br><br>
+	<center><table>
+		<tr>
+			<th colspan="2" style="text-align:center"><text class="description">Configuration</th>
+			<th colspan="4" style="text-align:center"><text class="description">Report</th>
+		</tr>
+		<tr>
+			<th><text class="description">&nbspStart Date</th>
+			<td>
+				<input type="date" id="startDate" min="2009-01-01" max="2019-10-10"
+					   style="text-align:center; border:none; height:30px; font-size:17pt;">
+			</td>
+			<th><text class="description">&nbspStart Money&nbsp</th>
+			<th style="text-align:right;"><text id="startMoneyReport" class="description"></th>
+			<th><text class="description">&nbspEnd Money</th>
+			<th style="text-align:right;"><text id="endMoneyReport" class="description"></th>
+		</tr>
+		<tr>
+			<th><text class="description">&nbspEnd Date</th>
+			<td>
+				<input type="date" id="endDate" max="2019-10-11" 
+					   style="text-align:center; border:none; height:30px; font-size:17pt;">
+			</td>
+			<th><text class="description">&nbspGain</th>
+			<th style="text-align:right;"><text id="acntPercGainReport" class="description"></th>
+			<th><text class="description">&nbspS&P 500</th>
+			<th style="text-align:right;"><text id="SPYPercGainReport" class="description"></th>
+		</tr>
+		<tr>
+			<th><text class="description">&nbspStart Money&nbsp</th>
+			<td>
+				<input type="number" id="startMoney" min=100000 
+					   style="text-align:center; border:none; width:190px; height:30px; font-size:17pt;">
+			</td>
+			<th><text class="description">&nbspPer year</th>
+			<th style="text-align:right;"><text id="aveYearPercGainReport" class="description"></th>
+			<th><text class="description">&nbspStd Dev</th>
+			<th style="text-align:right;"><text id="stdevAveYearPercGainReport" class="description"></th>
+		</tr>
+		<tr>
+			<th><text class="description">&nbspStategy&nbsp</th>
+			<td>
+				<select id="SimulationSelect" style="border:none; font-size:17pt;">
+					<option value="0">Price went up</option>
+					<option value="1">Price went down</option>
+					<option value="2">Small Open Close</option> <!--Small diff between Open and Close-->
+					<option value="3">Small High Low</option>   <!--Small diff between High and Low-->
+				</select>
+			</td>
+			<th><text class="description">&nbspSharpe</th>
+			<th style="text-align:right;"><text id="sharpeRatioReport" class="description"></th>
+			<th><text class="description">&nbspMax Drawdown&nbsp</th>
+			<th style="text-align:right;"><text id="maxDrawdownPercReport" class="description"></th>
+		</tr>
+	</table>
+	<br>
+    <button id="SimulationButton" onclick="RunSimulating()"><text class="description">Start the simulation</button>
+	<br>
+	<warningMsg><text id="warningMsg" style="color:red; font-size:25px"></text></warningMsg>
+	<svg id="svg" width="1900" height="1225"></svg>
+	</center>
+	<dropdown><text id="companiesDropdown" class="description"></dropdown>
+	<text class="description">&nbsp&nbsp&nbspTax Brackets Year&nbsp</text>
+	<select id="TaxYearSelect" style="font-size:17pt;">
+		<option value="2009">2009</option>
+		<option value="2010">2010</option>
+		<option value="2011">2011</option>
+		<option value="2012">2012</option>
+		<option value="2013">2013</option>
+		<option value="2014">2014</option>
+		<option value="2015">2015</option>
+		<option value="2016">2016</option>
+		<option value="2017">2017</option>
+		<option value="2018">2018</option>
+		<option value="2019">2019</option>
+	</select>
+	<br>
+	<div class="container">
+	<div class="floatLeft">
+	<center><table id="taxBracketTable">
+		<tr>
+			<th colspan="3" style="text-align:center">
+				<text id="taxBracketYear" class="description">2009
+			</th>
+		</tr>
+		<tr>
+			<th style="text-align:center"><text class="description">&nbspIncome</th>
+			<th style="text-align:center"><text class="description">&nbspIncome Tax Rate</th>
+			<th style="text-align:center"><text class="description">&nbspLong-Term Capital Gains Tax Rate</th>
+		</tr>
+		<tr>
+			<th style="text-align:center">
+				<text id="firstTax" class="description">&nbsp$8,350
+			</th>
+			<th style="text-align:center">
+				<text id="firstTaxRate" class="description">10%
+			</th>
+			<th style="text-align:center">
+				<text id="firstLongTermTaxRate" class="description">0%
+			</th>
+		</tr>
+		<tr>
+			<th style="text-align:center">
+				<text id="secondTax" class="description">&nbsp$33,950
+			</th>
+			<th style="text-align:center">
+				<text id="secondTaxRate" class="description">15%
+			</th>
+			<th style="text-align:center">
+				<text id="secondLongTermTaxRate" class="description">0%
+			</th>
+		</tr>
+		<tr>
+			<th style="text-align:center">
+				<text id="thirdTax" class="description">&nbsp$82,250
+			</th>
+			<th style="text-align:center">
+				<text id="thirdTaxRate" class="description">25%
+			</th>
+			<th style="text-align:center">
+				<text id="thirdLongTermTaxRate" class="description">15%
+			</th>
+		</tr>
+		<tr>
+			<th style="text-align:center">
+				<text id="fourthTax" class="description">&nbsp$171,550
+			</th>
+			<th style="text-align:center">
+				<text id="fourthTaxRate" class="description">28%
+			</th>
+			<th style="text-align:center">
+				<text id="fourthLongTermTaxRate" class="description">15%
+			</th>
+		</tr>
+		<tr>
+			<th style="text-align:center">
+				<text id="fifthTax" class="description">&nbsp$372,950
+			</th>
+			<th style="text-align:center">
+				<text id="fifthTaxRate" class="description">33%
+			</th>
+			<th style="text-align:center">
+				<text id="fifthLongTermTaxRate" class="description">15%
+			</th>
+		</tr>
+		<tr>
+			<th style="text-align:center">
+				<text id="sixthTax" class="description">&nbsp$372,951+
+			</th>
+			<th style="text-align:center">
+				<text id="sixthTaxRate" class="description">35%
+			</th>
+			<th style="text-align:center">
+				<text id="sixthLongTermTaxRate" class="description">15%
+			</th>
+		</tr>
+	</table></center>
+	</div>
+	<div class="floatRight">
+		<text id="incomeTaxResult" class="description"></text><br>
+		<text id="longTermTaxResult" class="description"></text>
+	</div>
+	</div>
+	<br><br><br>
+	<script src="index.js"></script>
+  </body>
+</html>
